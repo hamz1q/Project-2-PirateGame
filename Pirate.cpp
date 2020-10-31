@@ -1,0 +1,213 @@
+/*
+ *Title: Pirate.cpp
+ *Author: Hamza Qureshi
+ *Email: hamz1@umbc.edu
+ *Description: Member function implementation for the Pirate.h file for the Pirate project CMSC 202
+ */
+#include "Pirate.h"
+
+//Constructor
+Pirate::Pirate()
+{
+  
+}
+
+//Overloaded Constructor
+Pirate::Pirate(string name, int rating, string origin, string desc)
+{
+  m_pirateName = name;
+  m_pirateRating = rating;
+  m_pirateOrigin = origin;
+  m_pirateDesc = desc;
+}
+
+//Getters to access Pirate class private variables
+string Pirate::GetName()
+{
+  return m_pirateName;
+}
+
+int Pirate::GetRating()
+{
+  return m_pirateRating;
+}
+
+string Pirate::GetOrigin()
+{
+  return m_pirateOrigin;
+}
+
+string Pirate::GetDesc()
+{
+  return m_pirateDesc;
+}
+
+void Pirate::SetCurShip(Ship curShip)
+{
+  m_curShip = curShip;
+  //initializing days and cargo for user to be 0
+  //Done here because it only needs to be done once and SetCurShip is only called once
+  m_pirateDays = 0;
+  m_pirateCargo = 0;
+}
+
+//Name: CalcTreasure
+//Desc: Calculates treasure earned if player wins battle
+void Pirate::CalcTreasure(Ship enemyShip)
+{
+  m_pirateCargo = (enemyShip.m_cannon + enemyShip.m_toughness + enemyShip.m_speed) / 3;
+}
+
+//Name: Battle
+//Desc: Manages battle between player and computer
+void Pirate::Battle(Pirate enemyPirate, Ship enemyShip)
+{
+  //Ensuring ship is repaired if current toughness is 0 
+  if(m_curShip.m_curToughness == 0)
+    {
+      cout << "Current toughness is 0! Must repair ship before battle" << endl;
+    }
+  else
+    {
+      //Initializing counter for amount of cannons each pirate hits
+      int hit = 0;
+      int enemyHit = 0;
+      m_pirateDays += 1;
+      
+      cout << "A naval battle of the ages commences between " << m_pirateName << " and " <<
+	enemyPirate.GetName() << endl;
+
+      while(m_curShip.m_curToughness > 0 and enemyShip.m_curToughness > 0)
+	{
+	  cout << m_pirateName << " fires " << m_curShip.m_cannon << " cannons!" << endl;
+	  for(int i = 1; i <= m_curShip.m_cannon; i++)
+	    {
+	      //Randomly choosing number between 1-100, if number > rating then its a miss
+	      int accuracy = rand() % MAX_ACCURACY + 1;
+	      if(accuracy > m_pirateRating)
+		{
+		  continue;
+		}
+	      else
+		{
+		  hit += 1;
+		}
+	    }
+	  enemyShip.m_curToughness = enemyShip.m_curToughness - hit;
+	  cout << hit << " shots hit!" << endl;
+	  //Resetting counter(amount hit) for the next turn
+	  hit = 0;
+
+	  cout << enemyPirate.GetName() << " fires " << enemyShip.m_cannon << " cannons!"
+	       << endl;
+	  for(int j = 1; j <= enemyShip.m_cannon; j++)
+	    {
+	      //Randomly choosing number between 1-100, if number > rating then its a miss
+	      int enemyAccuracy = rand() % MAX_ACCURACY + 1;
+	      if(enemyAccuracy > m_pirateRating)
+		{
+		  continue;
+		}
+	      else
+		{
+		  enemyHit += 1;
+		}
+	    }
+	  m_curShip.m_curToughness = m_curShip.m_curToughness - enemyHit;
+	  cout << enemyHit << " shots hit!" << endl;
+	  //Resetting counter(amount of hits) for next turn
+	  enemyHit = 0;
+	}
+      if(m_curShip.m_curToughness <= 0 )
+	{
+	  m_pirateCargo = m_pirateCargo / 2;
+	  //Setting toughness to 0 in case the battle caused it to go in the negative
+	  m_curShip.m_curToughness = 0;
+	  cout << "You Lose!" << endl;
+	}
+      else if(enemyShip.m_curToughness <= 0)
+	{
+	  CalcTreasure(enemyShip);
+	  enemyShip.m_curToughness = 0;
+	  cout << "You Win!" << endl;
+	}
+    }
+}
+
+//Name: RepairShip
+//Desc: Repairs ships if damaged at all
+void Pirate::RepairShip()
+{
+  //Calculates the amount of damage taken by the ship
+  int damageTaken = m_curShip.m_toughness - m_curShip.m_curToughness;
+  
+  if(damageTaken != 0)
+    {
+      m_curShip.m_curToughness = m_curShip.m_toughness;
+      m_pirateDays += damageTaken;
+
+      cout << "It takes " << damageTaken << " to repair your " << m_curShip.m_type << endl;
+    }
+  else
+    {
+      cout << "Ship is at max toughness. No need for repairs!" << endl;
+    }
+}
+
+//Name: Flee
+//Desc: Compares player and enemy ship speeds to determine if player can flee or not
+void Pirate::Flee(Pirate enemyPirate, Ship enemyShip)
+{
+  cout << "You attempt to flee " << enemyPirate.GetName() << endl;
+  cout << endl;
+  
+  if(m_curShip.m_speed > enemyShip.m_speed)
+    {
+      cout << "You narrowly escape from the " << enemyShip.m_type << endl;
+      m_pirateDays += 1;
+    }
+  else
+    {
+      cout << "You are too slow! You cannot escape and now must battle!" << endl; 
+      Battle(enemyPirate, enemyShip);
+      m_pirateDays += 1;
+    }
+}
+
+//Name: DisplayScore
+//Desc: Displays all stats for player pirate and ship
+void Pirate::DisplayScore()
+{
+  //Converting int to float to calculate rate of cargo a day
+  float cargo = m_pirateCargo;
+  float days = m_pirateDays; 
+  float dailyCargo = cargo/days;
+  
+  cout << "**********************" << endl;
+  cout << endl;
+  cout << "Name: " << m_pirateName << endl;
+  cout << endl;
+  cout << "Rating: " << m_pirateRating << endl;
+  cout << endl;
+  cout << "Origin: " << m_pirateOrigin << endl;
+  cout << endl;
+  cout << "Description: " << m_pirateDesc << endl;
+  cout << endl;
+  cout << "Days Sailing: " << m_pirateDays << endl;
+  cout << endl;
+  cout << "Cargo Captured: " << m_pirateCargo << endl;
+  cout << endl;
+  cout << "Cargo per day: " << dailyCargo <<  endl;
+  cout << endl;
+  cout << "Ship Type: " << m_curShip.m_type << endl;
+  cout << endl;
+  cout << "Ship Cannons: " << m_curShip.m_cannon << endl;
+  cout << endl;
+  cout << "Ship Current Toughness: " << m_curShip.m_curToughness << endl;
+  cout << endl;
+  cout << "Ship Max Toughness: " << m_curShip.m_toughness << endl;
+  cout << endl;
+  cout << "Ship Speed: " << m_curShip.m_speed << endl;
+  cout << endl;
+  cout << "**********************" << endl;
+}
